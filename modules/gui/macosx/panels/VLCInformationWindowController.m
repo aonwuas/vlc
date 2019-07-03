@@ -29,6 +29,7 @@
 #import "playlist/VLCPlayerController.h"
 #import "windows/video/VLCVideoOutputProvider.h"
 #import "library/VLCInputItem.h"
+#import "views/VLCImageView.h"
 
 #import <vlc_url.h>
 
@@ -66,7 +67,7 @@
 
 - (id)init
 {
-    self = [super initWithWindowNibName:@"MediaInfo"];
+    self = [super initWithWindowNibName:@"VLCInformationWindow"];
     return self;
 }
 
@@ -127,8 +128,8 @@
     [self.window setTitle: _NS("Media Information")];
 
     [_uriLabel setStringValue: _NS("Location")];
-    [_titleLabel setStringValue: _NS("Title")];
-    [_authorLabel setStringValue: _NS("Artist")];
+    [_titleLabel setStringValue: _NS(VLC_META_TITLE)];
+    [_artistLabel setStringValue: _NS(VLC_META_ARTIST)];
     [_saveMetaDataButton setStringValue: _NS("Save Metadata")];
 
     [_segmentedView setLabel:_NS("General") forSegment:0];
@@ -138,14 +139,20 @@
     /* constants defined in vlc_meta.h */
     [_genreLabel setStringValue: _NS(VLC_META_GENRE)];
     [_copyrightLabel setStringValue: _NS(VLC_META_COPYRIGHT)];
-    [_collectionLabel setStringValue: _NS(VLC_META_ALBUM)];
-    [_seqNumLabel setStringValue: _NS(VLC_META_TRACK_NUMBER)];
+    [_albumLabel setStringValue: _NS(VLC_META_ALBUM)];
+    [_trackNumberLabel setStringValue: _NS(VLC_META_TRACK_NUMBER)];
+    [_trackTotalLabel setStringValue: _NS("Track Total")];
     [_descriptionLabel setStringValue: _NS(VLC_META_DESCRIPTION)];
     [_dateLabel setStringValue: _NS(VLC_META_DATE)];
     [_languageLabel setStringValue: _NS(VLC_META_LANGUAGE)];
     [_nowPlayingLabel setStringValue: _NS(VLC_META_NOW_PLAYING)];
     [_publisherLabel setStringValue: _NS(VLC_META_PUBLISHER)];
     [_encodedbyLabel setStringValue: _NS(VLC_META_ENCODED_BY)];
+    [_showNameLabel setStringValue: _NS(VLC_META_SHOW_NAME)];
+    [_episodeLabel setStringValue: _NS(VLC_META_EPISODE)];
+    [_seasonLabel setStringValue: _NS(VLC_META_SEASON)];
+    [_actorsLabel setStringValue: _NS(VLC_META_ACTORS)];
+    [_directorLabel setStringValue: _NS(VLC_META_DIRECTOR)];
 
     /* statistics */
     [_inputLabel setStringValue: _NS("Input")];
@@ -265,10 +272,16 @@
 [_##foo##TextField setStringValue:@""];
         SET( uri );
         SET( title );
-        SET( author );
-        SET( collection );
-        SET( seqNum );
+        SET( artist );
+        SET( album );
+        SET( trackNumber );
+        SET( trackTotal );
         SET( genre );
+        SET( season );
+        SET( episode );
+        SET( actors );
+        SET( director );
+        SET( showName );
         SET( copyright );
         SET( publisher );
         SET( nowPlaying );
@@ -277,18 +290,24 @@
         SET( description );
         SET( encodedby );
 #undef SET
-        [_imageWell setImage: [NSImage imageNamed: @"noart.png"]];
+        [_artworkImageView setImage: [NSImage imageNamed:@"noart.png"]];
     } else {
         if (!_representedInputItem.preparsed) {
             [_representedInputItem preparseInputItem];
         }
 
-        _uriTextField.stringValue = _representedInputItem.MRL;
+        _uriTextField.stringValue = _representedInputItem.decodedMRL;
         _titleTextField.stringValue = _representedInputItem.title;
-        _authorTextField.stringValue = _representedInputItem.artist;
-        _collectionTextField.stringValue = _representedInputItem.albumName;
-        _seqNumTextField.stringValue = _representedInputItem.trackNumber;
+        _artistTextField.stringValue = _representedInputItem.artist;
+        _albumTextField.stringValue = _representedInputItem.albumName;
+        _trackNumberTextField.stringValue = _representedInputItem.trackNumber;
+        _trackTotalTextField.stringValue = _representedInputItem.trackTotal;
         _genreTextField.stringValue = _representedInputItem.genre;
+        _seasonTextField.stringValue = _representedInputItem.season;
+        _episodeTextField.stringValue = _representedInputItem.episode;
+        _actorsTextField.stringValue = _representedInputItem.actors;
+        _directorTextField.stringValue = _representedInputItem.director;
+        _showNameTextField.stringValue = _representedInputItem.showName;
         _copyrightTextField.stringValue = _representedInputItem.copyright;
         _publisherTextField.stringValue = _representedInputItem.publisher;
         _nowPlayingTextField.stringValue = _representedInputItem.nowPlaying;
@@ -298,14 +317,8 @@
         _encodedbyTextField.stringValue = _representedInputItem.encodedBy;
 
         NSURL *artworkURL = _representedInputItem.artworkURL;
-        NSImage *artwork;
-        if (artworkURL) {
-            artwork = [[NSImage alloc] initWithContentsOfURL:_representedInputItem.artworkURL];
-        }
-        if (!artwork) {
-            artwork = [NSImage imageNamed: @"noart.png"];
-        }
-        [_imageWell setImage:artwork];
+        NSImage *placeholderImage = [NSImage imageNamed: @"noart.png"];
+        [_artworkImageView setImageURL:artworkURL placeholderImage:placeholderImage];
 
         if (!_mainMenuInstance) {
             [self.window setTitle:_representedInputItem.title];
@@ -373,15 +386,18 @@
 
     _representedInputItem.name = _titleTextField.stringValue;
     _representedInputItem.title = _titleTextField.stringValue;
-    _representedInputItem.artist = _authorTextField.stringValue;
-    _representedInputItem.albumName = _collectionTextField.stringValue;
+    _representedInputItem.artist = _artistTextField.stringValue;
+    _representedInputItem.albumName = _albumTextField.stringValue;
     _representedInputItem.genre = _genreTextField.stringValue;
-    _representedInputItem.trackNumber = _seqNumTextField.stringValue;
+    _representedInputItem.trackNumber = _trackNumberTextField.stringValue;
     _representedInputItem.date = _dateTextField.stringValue;
     _representedInputItem.copyright = _copyrightTextField.stringValue;
     _representedInputItem.publisher = _publisherTextField.stringValue;
     _representedInputItem.contentDescription = _descriptionTextField.stringValue;
     _representedInputItem.language = _languageTextField.stringValue;
+    _representedInputItem.showName = _showNameTextField.stringValue;
+    _representedInputItem.actors = _actorsTextField.stringValue;
+    _representedInputItem.director = _directorTextField.stringValue;
 
     [_representedInputItem writeMetadataToFile];
     [_saveMetaDataButton setEnabled: NO];
