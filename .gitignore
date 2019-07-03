@@ -54,3 +54,8 @@ build*
 contrib-*
 install-*
 
+# My gitignores
+vlc.VC.db
+vlc.sln
+vlc.vcxproj
+vlc.vcxproj.filters
