@@ -28,6 +28,9 @@
 #import "playlist/VLCPlaylistItem.h"
 #import "playlist/VLCPlaylistModel.h"
 #import "views/VLCDragDropView.h"
+#import "library/VLCLibraryDataTypes.h"
+#import "library/VLCInputItem.h"
+#import "windows/VLCOpenInputMetadata.h"
 
 static NSString *VLCPlaylistCellIdentifier = @"VLCPlaylistCellIdentifier";
 
@@ -43,6 +46,11 @@ static NSString *VLCPlaylistCellIdentifier = @"VLCPlaylistCellIdentifier";
 {
     _playlistController = playlistController;
     _playlistModel = _playlistController.playlistModel;
+}
+
+- (void)prepareForUse
+{
+    [_tableView registerForDraggedTypes:@[VLCMediaLibraryMediaItemPasteboardType, NSFilenamesPboardType]];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
@@ -94,5 +102,58 @@ static NSString *VLCPlaylistCellIdentifier = @"VLCPlaylistCellIdentifier";
     [_tableView reloadData];
 }
 
-@end
+- (NSDragOperation)tableView:(NSTableView *)tableView
+                validateDrop:(id<NSDraggingInfo>)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)dropOperation
+{
+    return NSDragOperationCopy;
+}
 
+- (BOOL)tableView:(NSTableView *)tableView
+       acceptDrop:(id<NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)dropOperation
+{
+    NSData *data = [info.draggingPasteboard dataForType:VLCMediaLibraryMediaItemPasteboardType];
+    if (!data) {
+        id propertyList = [info.draggingPasteboard propertyListForType:NSFilenamesPboardType];
+        if (propertyList == nil) {
+            return NO;
+        }
+
+        NSArray *mediaPaths = [propertyList sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+        NSUInteger mediaCount = [mediaPaths count];
+        if (mediaCount > 0) {
+            NSMutableArray *metadataArray = [NSMutableArray arrayWithCapacity:mediaCount];
+            for (NSUInteger i = 0; i < mediaCount; i++) {
+                VLCOpenInputMetadata *inputMetadata;
+                NSURL *url = [NSURL fileURLWithPath:mediaPaths[i] isDirectory:NO];
+                if (!url) {
+                    continue;
+                }
+                inputMetadata = [[VLCOpenInputMetadata alloc] init];
+                inputMetadata.MRLString = url.absoluteString;
+                [metadataArray addObject:inputMetadata];
+            }
+            [_playlistController addPlaylistItems:metadataArray];
+
+            return YES;
+        }
+        return NO;
+    }
+    NSArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    if (!data) {
+        return NO;
+    }
+    NSUInteger arrayCount = array.count;
+
+    for (NSUInteger x = 0; x < arrayCount; x++) {
+        VLCMediaLibraryMediaItem *mediaItem = array[x];
+        [_playlistController addInputItem:mediaItem.inputItem.vlcInputItem atPosition:row startPlayback:NO];
+    }
+
+    return YES;
+}
+
+@end

@@ -25,7 +25,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *VLCMediaLibraryMediaItemPasteboardType;
+
 @class VLCMediaLibraryMediaItem;
+@class VLCInputItem;
 
 extern const CGFloat VLCMediaLibrary4KWidth;
 extern const CGFloat VLCMediaLibrary4KHeight;
@@ -146,10 +149,13 @@ extern const long long int VLCMediaLibraryMediaItemDurationDenominator;
 
 + (nullable instancetype)mediaItemForLibraryID:(int64_t)libraryID;
 - (instancetype)initWithMediaItem:(struct vlc_ml_media_t *)mediaItem;
+- (instancetype)initWithExternalURL:(NSURL *)url;
+- (instancetype)initWithStreamURL:(NSURL *)url;
 
 @property (readonly) int64_t libraryID;
 @property (readonly) vlc_ml_media_type_t mediaType;
 @property (readonly) vlc_ml_media_subtype_t mediaSubType;
+@property (readonly) VLCInputItem *inputItem;
 
 @property (readonly) NSArray <VLCMediaLibraryFile *> *files;
 @property (readonly) NSArray <VLCMediaLibraryTrack *> *tracks;

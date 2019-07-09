@@ -786,11 +786,9 @@ static inline void RenderBackground( subpicture_region_t *p_region,
             if( p_char->p_style->i_style_flags & STYLE_BACKGROUND )
             {
                 uint8_t i_x, i_y, i_z;
-                ExtractComponents( p_char->b_in_karaoke ? p_char->p_style->i_karaoke_background_color :
-                                                          p_char->p_style->i_background_color,
+                ExtractComponents( p_char->p_style->i_background_color,
                                    &i_x, &i_y, &i_z );
-                const uint8_t i_alpha = p_char->b_in_karaoke ? p_char->p_style->i_karaoke_background_alpha:
-                                                               p_char->p_style->i_background_alpha;
+                const uint8_t i_alpha = p_char->p_style->i_background_alpha;
 
                 /* Render the actual background */
                 if( i_alpha != STYLE_ALPHA_TRANSPARENT )
@@ -1382,12 +1380,6 @@ static int Render( filter_t *p_filter, subpicture_region_t *p_region_out,
             if( !rv )
                 break;
         }
-
-        /* With karaoke, we're going to have to render the text a number
-         * of times to show the progress marker on the text.
-         */
-        if( text_block.pi_k_durations )
-            var_SetBool( p_filter, "text-rerender", true );
     }
 
     FreeLines( text_block.p_laid );
@@ -1396,7 +1388,6 @@ static int Render( filter_t *p_filter, subpicture_region_t *p_region_out,
     FreeStylesArray( text_block.pp_styles, text_block.i_count );
     if( text_block.pp_ruby )
         FreeRubyBlockArray( text_block.pp_ruby, text_block.i_count );
-    free( text_block.pi_k_durations );
 
     return rv;
 }

@@ -196,6 +196,7 @@ static int ShowController(vlc_object_t *p_this, const char *psz_variable,
     _playlistDataSource.tableView = _playlistTableView;
     _playlistDataSource.dragDropView = _playlistDragDropView;
     _playlistDataSource.counterTextField = _playlistCounterTextField;
+    [_playlistDataSource prepareForUse];
     _playlistController.playlistDataSource = _playlistDataSource;
 
     _playlistTableView.dataSource = _playlistDataSource;
@@ -217,6 +218,7 @@ static int ShowController(vlc_object_t *p_this, const char *psz_variable,
     _recentVideoLibraryCollectionView.dataSource = _libraryVideoDataSource;
     _recentVideoLibraryCollectionView.delegate = _libraryVideoDataSource;
     [_recentVideoLibraryCollectionView registerClass:[VLCLibraryCollectionViewItem class] forItemWithIdentifier:VLCLibraryCellIdentifier];
+    [_videoLibraryCollectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:NO];
 
     _libraryAudioDataSource = [[VLCLibraryAudioDataSource alloc] init];
     _libraryAudioDataSource.libraryModel = mainInstance.libraryController.libraryModel;

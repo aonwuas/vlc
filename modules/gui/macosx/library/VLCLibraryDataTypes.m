@@ -24,14 +24,19 @@
 
 #import "main/VLCMain.h"
 #import "extensions/NSString+Helpers.h"
+#import "library/VLCInputItem.h"
 
 #import <vlc_url.h>
+
+NSString *VLCMediaLibraryMediaItemPasteboardType = @"VLCMediaLibraryMediaItemPasteboardType";
 
 const CGFloat VLCMediaLibrary4KWidth = 3840.;
 const CGFloat VLCMediaLibrary4KHeight = 2160.;
 const CGFloat VLCMediaLibrary720pWidth = 1280.;
 const CGFloat VLCMediaLibrary720pHeight = 720.;
 const long long int VLCMediaLibraryMediaItemDurationDenominator = 1000;
+
+NSString *VLCMediaLibraryMediaItemLibraryID = @"VLCMediaLibraryMediaItemLibraryID";
 
 @implementation VLCMediaLibraryFile
 
@@ -297,10 +302,65 @@ const long long int VLCMediaLibraryMediaItemDurationDenominator = 1000;
     return self;
 }
 
+- (instancetype)initWithExternalURL:(NSURL *)url
+{
+    NSString *urlString = url.absoluteString;
+    if (!urlString) {
+        return self;
+    }
+
+    vlc_medialibrary_t *p_mediaLibrary = vlc_ml_instance_get(getIntf());
+    vlc_ml_media_t *p_media = vlc_ml_new_external_media(p_mediaLibrary, urlString.UTF8String);
+    if (p_media) {
+        self = [self initWithMediaItem:p_media library:p_mediaLibrary];
+        vlc_ml_media_release(p_media);
+    }
+    return self;
+}
+
+- (instancetype)initWithStreamURL:(NSURL *)url
+{
+    NSString *urlString = url.absoluteString;
+    if (!urlString) {
+        return self;
+    }
+
+    vlc_medialibrary_t *p_mediaLibrary = vlc_ml_instance_get(getIntf());
+    vlc_ml_media_t *p_media = vlc_ml_new_stream(p_mediaLibrary, urlString.UTF8String);
+    if (p_media) {
+        self = [self initWithMediaItem:p_media library:p_mediaLibrary];
+        vlc_ml_media_release(p_media);
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    int64_t libraryID = [aDecoder decodeInt64ForKey:VLCMediaLibraryMediaItemLibraryID];
+    self = [VLCMediaLibraryMediaItem mediaItemForLibraryID:libraryID];
+    return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder
+{
+    [aCoder encodeInt64:_libraryID forKey:VLCMediaLibraryMediaItemLibraryID];
+}
+
 - (NSString *)description
 {
     return [NSString stringWithFormat:@"%@ — title: %@, ID: %lli, type: %i, artwork: %@",
             NSStringFromClass([self class]), _title, _libraryID, _mediaType, _smallArtworkMRL];
+}
+
+- (VLCInputItem *)inputItem
+{
+    input_item_t *p_inputItem = vlc_ml_get_input_item(_p_mediaLibrary, _libraryID);
+    VLCInputItem *inputItem = nil;
+    if (p_inputItem) {
+        inputItem = [[VLCInputItem alloc] initWithInputItem:p_inputItem];
+    }
+    input_item_Release(p_inputItem);
+    return inputItem;
 }
 
 #pragma mark - preference setters / getters

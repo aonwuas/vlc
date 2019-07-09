@@ -1,19 +1,14 @@
 /*****************************************************************************
- * cmd_fullscreen.cpp
- *****************************************************************************
- * Copyright (C) 2003-2009 the VideoLAN team
- *
- * Authors: Cyril Deguet     <asmax@via.ecp.fr>
- *          Olivier Teulière <ipkiss@via.ecp.fr>
+ * Copyright (C) 2019 VLC authors and VideoLAN
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * ( at your option ) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -21,10 +16,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
 
-#include "cmd_fullscreen.hpp"
+#include "settings.hpp"
 
-void CmdFullscreen::execute()
+#define QML_AVAILABLE_PROPERTY_IMPL(PropertyName, key, defaultValue) \
+    QVariant Settings::get##PropertyName() const { \
+        return getSettings()->value(key, defaultValue); \
+    } \
+    void Settings::set##PropertyName(QVariant value) { \
+        getSettings()->setValue(key, value); \
+        emit PropertyName##Changed(); \
+    }
+
+Settings::Settings(intf_thread_t *_p_intf, QObject *parent)
+    : QObject(parent),p_intf( _p_intf )
 {
-    vlc_player_t *player = vlc_playlist_GetPlayer( getPL() );
-    vlc_player_vout_SetFullscreen( player, true );
 }
+
+
+QML_AVAILABLE_PROPERTY_IMPL(VLCStyle_colors_state,"VLCStyle-colors-state","system")
+QML_AVAILABLE_PROPERTY_IMPL(medialib_gridView,"medialib-gridView",true)
