@@ -68,13 +68,14 @@ BookmarksDialog::BookmarksDialog( intf_thread_t *_p_intf ):QVLCFrame( _p_intf )
     bookmarksList->setSelectionMode( QAbstractItemView::ExtendedSelection );
     bookmarksList->setSelectionBehavior( QAbstractItemView::SelectRows );
     bookmarksList->setEditTriggers( QAbstractItemView::SelectedClicked );
-    bookmarksList->setColumnCount( 3 );
+    bookmarksList->setColumnCount( 4 );
     bookmarksList->resize( sizeHint() );
 
     QStringList headerLabels;
     headerLabels << qtr( "Description" );
     headerLabels << qtr( "Bytes" );
     headerLabels << qtr( "Time" );
+    headerLabels << qtr( "Name" );
     bookmarksList->setHeaderLabels( headerLabels );
 
     layout->addWidget( buttonsBox );
